@@ -63,7 +63,6 @@
             width: 100vw;
             height: 100vh;
             background: #e9ecef;
-            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600"><rect width="800" height="600" fill="%23f8f9fa" stroke="%23dee2e6" stroke-width="2"/><rect x="50" y="50" width="200" height="150" fill="none" stroke="%23adb5bd" stroke-width="1"/><text x="150" y="130" text-anchor="middle" font-family="Arial" font-size="14" fill="%23495057">Room 1</text><rect x="300" y="50" width="150" height="150" fill="none" stroke="%23adb5bd" stroke-width="1"/><text x="375" y="130" text-anchor="middle" font-family="Arial" font-size="14" fill="%23495057">Room 2</text><rect x="500" y="50" width="250" height="150" fill="none" stroke="%23adb5bd" stroke-width="1"/><text x="625" y="130" text-anchor="middle" font-family="Arial" font-size="14" fill="%23495057">Conference Room</text><rect x="50" y="250" width="300" height="200" fill="none" stroke="%23adb5bd" stroke-width="1"/><text x="200" y="355" text-anchor="middle" font-family="Arial" font-size="14" fill="%23495057">Open Office</text><rect x="400" y="250" width="150" height="100" fill="none" stroke="%23adb5bd" stroke-width="1"/><text x="475" y="305" text-anchor="middle" font-family="Arial" font-size="14" fill="%23495057">Kitchen</text><rect x="400" y="400" width="150" height="100" fill="none" stroke="%23adb5bd" stroke-width="1"/><text x="475" y="455" text-anchor="middle" font-family="Arial" font-size="14" fill="%23495057">Storage</text><rect x="600" y="250" width="150" height="250" fill="none" stroke="%23adb5bd" stroke-width="1"/><text x="675" y="380" text-anchor="middle" font-family="Arial" font-size="14" fill="%23495057">Meeting Room</text></svg>');
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
@@ -245,7 +244,10 @@
 <body>
     <div class="control-bar">
         <button class="control-btn" onclick="addCircleButton()">+ Add Circle Button</button>
+        <button class="control-btn" onclick="triggerBackgroundUpload()">🖼️ Change Background</button>
+        <button class="control-btn" onclick="revertToDefaultBackground()">↩️ Default Background</button>
         <button class="control-btn save" onclick="saveMap()">💾 Save Map</button>
+        <input type="file" class="file-input" id="backgroundInput" accept="image/*">
     </div>
 
     <div class="map-container" id="mapContainer"></div>
@@ -273,6 +275,34 @@
         let circleButtons = [];
         let currentButtonId = null;
         let buttonCounter = 1;
+        
+        // Background image management
+        const defaultBackgroundImage = "url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 800 600\"><rect width=\"800\" height=\"600\" fill=\"%23f8f9fa\" stroke=\"%23dee2e6\" stroke-width=\"2\"/><rect x=\"50\" y=\"50\" width=\"200\" height=\"150\" fill=\"none\" stroke=\"%23adb5bd\" stroke-width=\"1\"/><text x=\"150\" y=\"130\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"14\" fill=\"%23495057\">Room 1</text><rect x=\"300\" y=\"50\" width=\"150\" height=\"150\" fill=\"none\" stroke=\"%23adb5bd\" stroke-width=\"1\"/><text x=\"375\" y=\"130\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"14\" fill=\"%23495057\">Room 2</text><rect x=\"500\" y=\"50\" width=\"250\" height=\"150\" fill=\"none\" stroke=\"%23adb5bd\" stroke-width=\"1\"/><text x=\"625\" y=\"130\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"14\" fill=\"%23495057\">Conference Room</text><rect x=\"50\" y=\"250\" width=\"300\" height=\"200\" fill=\"none\" stroke=\"%23adb5bd\" stroke-width=\"1\"/><text x=\"200\" y=\"355\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"14\" fill=\"%23495057\">Open Office</text><rect x=\"400\" y=\"250\" width=\"150\" height=\"100\" fill=\"none\" stroke=\"%23adb5bd\" stroke-width=\"1\"/><text x=\"475\" y=\"305\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"14\" fill=\"%23495057\">Kitchen</text><rect x=\"400\" y=\"400\" width=\"150\" height=\"100\" fill=\"none\" stroke=\"%23adb5bd\" stroke-width=\"1\"/><text x=\"475\" y=\"455\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"14\" fill=\"%23495057\">Storage</text><rect x=\"600\" y=\"250\" width=\"150\" height=\"250\" fill=\"none\" stroke=\"%23adb5bd\" stroke-width=\"1\"/><text x=\"675\" y=\"380\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"14\" fill=\"%23495057\">Meeting Room</text></svg>')";
+        let currentBackgroundImage = defaultBackgroundImage;
+        
+        // Initialize with default background
+        function initializeBackground() {
+            const mapContainer = document.getElementById('mapContainer');
+            mapContainer.style.backgroundImage = currentBackgroundImage;
+        }
+
+        // Background image functions
+        function triggerBackgroundUpload() {
+            document.getElementById('backgroundInput').click();
+        }
+        
+        function changeBackgroundImage(imageDataUrl) {
+            currentBackgroundImage = `url('${imageDataUrl}')`;
+            const mapContainer = document.getElementById('mapContainer');
+            mapContainer.style.backgroundImage = currentBackgroundImage;
+        }
+        
+        function revertToDefaultBackground() {
+            currentBackgroundImage = defaultBackgroundImage;
+            const mapContainer = document.getElementById('mapContainer');
+            mapContainer.style.backgroundImage = currentBackgroundImage;
+            alert('Background reverted to default floorplan.');
+        }
 
         function addCircleButton() {
             const mapContainer = document.getElementById('mapContainer');
@@ -415,6 +445,12 @@ Enter 1, 2, or 3:`);
             const controlBar = docClone.querySelector('.control-bar');
             if (controlBar) {
                 controlBar.remove();
+            }
+            
+            // Set the current background image in the clone
+            const mapContainerClone = docClone.querySelector('.map-container');
+            if (mapContainerClone) {
+                mapContainerClone.style.backgroundImage = currentBackgroundImage;
             }
             
             // Fix circle button onclick attributes in the clone
@@ -630,6 +666,12 @@ Note: Files are prefixed with room numbers to help with organization.`);
                 controlBar.remove();
             }
             
+            // Set the current background image in the clone
+            const mapContainerClone = docClone.querySelector('.map-container');
+            if (mapContainerClone) {
+                mapContainerClone.style.backgroundImage = currentBackgroundImage;
+            }
+            
             // Fix circle button onclick attributes in the clone
             const circleButtonsInClone = docClone.querySelectorAll('.circle-button');
             circleButtonsInClone.forEach(button => {
@@ -813,6 +855,26 @@ Note: Files are prefixed with room numbers to help with organization.`);
             
             event.target.value = '';
         };
+        
+        // Background image upload handling
+        document.getElementById('backgroundInput').onchange = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.startsWith('image/')) {
+                alert('Please select a valid image file.');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                changeBackgroundImage(e.target.result);
+                alert('Background image updated successfully!');
+            };
+            reader.readAsDataURL(file);
+            
+            event.target.value = '';
+        };
 
         // Close modal when clicking outside
         document.addEventListener('click', function(e) {
@@ -821,6 +883,18 @@ Note: Files are prefixed with room numbers to help with organization.`);
                 closeModal();
             }
         });
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeBackground();
+        });
+        
+        // Initialize immediately if DOM is already loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeBackground);
+        } else {
+            initializeBackground();
+        }
     </script>
 </body>
 </html>
