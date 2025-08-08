@@ -8,16 +8,16 @@ Map Creator is a single-file HTML web application that creates an interactive fl
 ## Working Effectively
 
 ### Serving the Application
-- **REQUIRED**: Serve the application via HTTP server. DO NOT open `map-creator.html` directly in browser (file:// protocol will not work correctly)
+- **REQUIRED**: Serve the application via HTTP server. DO NOT open `index.html` directly in browser (file:// protocol will not work correctly)
 - Start HTTP server: `cd /path/to/repository && python3 -m http.server 8000`
-- Access application: `http://localhost:8000/map-creator.html`
+- Access application: `http://localhost:8000/index.html`
 - Server startup is instant - no build time required
 
 ### Repository Structure
 ```
 map-creator/
 ├── README.md           # Project requirements and description
-├── map-creator.html    # Complete application (HTML, CSS, JavaScript)
+├── index.html    # Complete application (HTML, CSS, JavaScript)
 └── .github/
     └── copilot-instructions.md
 ```
@@ -33,10 +33,10 @@ map-creator/
 ## Validation and Testing
 
 ### Manual Validation Requirements
-After making ANY changes to `map-creator.html`, ALWAYS perform this complete validation scenario:
+After making ANY changes to `index.html`, ALWAYS perform this complete validation scenario:
 
 1. **Start Server**: `python3 -m http.server 8000`
-2. **Open Application**: Navigate to `http://localhost:8000/map-creator.html`
+2. **Open Application**: Navigate to `http://localhost:8000/index.html`
 3. **Test Core Workflow**:
    - Click "+ Add Circle Button" - verify numbered circle appears on map
    - Click "+ Add Circle Button" again - verify second numbered circle appears
@@ -59,7 +59,7 @@ After making ANY changes to `map-creator.html`, ALWAYS perform this complete val
 
 ## Key Code Locations
 
-### Main Application File: `map-creator.html`
+### Main Application File: `index.html`
 - **Lines 1-245**: CSS styles for UI components
 - **Lines 246-271**: HTML structure (control bar, map container, modal)
 - **Lines 272-444**: JavaScript functionality
@@ -77,7 +77,7 @@ After making ANY changes to `map-creator.html`, ALWAYS perform this complete val
 ## Common Development Tasks
 
 ### Adding New Features
-- Edit `map-creator.html` directly
+- Edit `index.html` directly
 - Test changes by refreshing browser after serving via HTTP
 - All functionality is client-side JavaScript
 
@@ -94,7 +94,7 @@ After making ANY changes to `map-creator.html`, ALWAYS perform this complete val
 ### Debugging Issues
 - Open browser developer tools (F12)
 - Check Console tab for JavaScript errors
-- Use Network tab to verify file serving (should see 200 status for map-creator.html)
+- Use Network tab to verify file serving (should see 200 status for index.html)
 - Inspect Elements tab to verify DOM manipulation
 
 ## File Operations and Data Handling
@@ -117,9 +117,9 @@ After making ANY changes to `map-creator.html`, ALWAYS perform this complete val
 - Tested working in current Chrome, Firefox, Safari
 
 ## Development Workflow
-1. Make changes to `map-creator.html`
+1. Make changes to `index.html`
 2. Serve via `python3 -m http.server 8000`
-3. Test in browser at `http://localhost:8000/map-creator.html`
+3. Test in browser at `http://localhost:8000/index.html`
 4. Perform complete validation scenario
 5. Take screenshot to verify visual correctness
 6. Commit changes
