@@ -276,6 +276,15 @@
         let currentButtonId = null;
         let buttonCounter = 1;
         
+        function repositionAllButtons() {
+            circleButtons.forEach(buttonData => {
+                const button = document.querySelector('[data-button-id="' + buttonData.id + '"]');
+                if (button) {
+                    updateButtonPosition(button, buttonData.percentageX, buttonData.percentageY);
+                }
+            });
+        }
+
         // Background image management
         const defaultBackgroundImage = "url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 800 600\"><rect width=\"800\" height=\"600\" fill=\"%23f8f9fa\" stroke=\"%23dee2e6\" stroke-width=\"2\"/><rect x=\"50\" y=\"50\" width=\"200\" height=\"150\" fill=\"none\" stroke=\"%23adb5bd\" stroke-width=\"1\"/><text x=\"150\" y=\"130\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"14\" fill=\"%23495057\">Room 1</text><rect x=\"300\" y=\"50\" width=\"150\" height=\"150\" fill=\"none\" stroke=\"%23adb5bd\" stroke-width=\"1\"/><text x=\"375\" y=\"130\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"14\" fill=\"%23495057\">Room 2</text><rect x=\"500\" y=\"50\" width=\"250\" height=\"150\" fill=\"none\" stroke=\"%23adb5bd\" stroke-width=\"1\"/><text x=\"625\" y=\"130\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"14\" fill=\"%23495057\">Conference Room</text><rect x=\"50\" y=\"250\" width=\"300\" height=\"200\" fill=\"none\" stroke=\"%23adb5bd\" stroke-width=\"1\"/><text x=\"200\" y=\"355\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"14\" fill=\"%23495057\">Open Office</text><rect x=\"400\" y=\"250\" width=\"150\" height=\"100\" fill=\"none\" stroke=\"%23adb5bd\" stroke-width=\"1\"/><text x=\"475\" y=\"305\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"14\" fill=\"%23495057\">Kitchen</text><rect x=\"400\" y=\"400\" width=\"150\" height=\"100\" fill=\"none\" stroke=\"%23adb5bd\" stroke-width=\"1\"/><text x=\"475\" y=\"455\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"14\" fill=\"%23495057\">Storage</text><rect x=\"600\" y=\"250\" width=\"150\" height=\"250\" fill=\"none\" stroke=\"%23adb5bd\" stroke-width=\"1\"/><text x=\"675\" y=\"380\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"14\" fill=\"%23495057\">Meeting Room</text></svg>')";
         let currentBackgroundImage = defaultBackgroundImage;
@@ -312,9 +321,12 @@
             button.className = 'circle-button';
             button.dataset.buttonId = buttonId;
             button.textContent = buttonCounter;
-            button.style.left = '100px';
-            button.style.top = '100px';
             button.draggable = true;
+            
+            // Default position: center of the background image (50%, 50%)
+            const defaultPercentageX = 50;
+            const defaultPercentageY = 50;
+            updateButtonPosition(button, defaultPercentageX, defaultPercentageY);
             
             button.onclick = function(e) {
                 e.stopPropagation();
@@ -330,8 +342,8 @@
             circleButtons.push({
                 id: buttonId,
                 number: buttonCounter,
-                x: 100,
-                y: 100,
+                percentageX: defaultPercentageX,
+                percentageY: defaultPercentageY,
                 media: []
             });
             
@@ -516,6 +528,70 @@ Enter 1, 2, or 3:`);
         let circleButtons = ${JSON.stringify(buttonData)};
         let currentButtonId = null;
 
+        function getBackgroundImageBounds() {
+            const mapContainer = document.getElementById('mapContainer');
+            const containerRect = mapContainer.getBoundingClientRect();
+            
+            // Background image is an SVG with viewBox="0 0 800 600"
+            const imageAspectRatio = 800 / 600; // 4:3 aspect ratio
+            const containerAspectRatio = containerRect.width / containerRect.height;
+            
+            let imageWidth, imageHeight, imageLeft, imageTop;
+            
+            if (containerAspectRatio > imageAspectRatio) {
+                // Container is wider than image - image will be constrained by height
+                imageHeight = containerRect.height;
+                imageWidth = imageHeight * imageAspectRatio;
+                imageLeft = (containerRect.width - imageWidth) / 2;
+                imageTop = 0;
+            } else {
+                // Container is taller than image - image will be constrained by width
+                imageWidth = containerRect.width;
+                imageHeight = imageWidth / imageAspectRatio;
+                imageLeft = 0;
+                imageTop = (containerRect.height - imageHeight) / 2;
+            }
+            
+            return {
+                left: imageLeft,
+                top: imageTop,
+                width: imageWidth,
+                height: imageHeight,
+                right: imageLeft + imageWidth,
+                bottom: imageTop + imageHeight
+            };
+        }
+        
+        function percentageToPixel(percentageX, percentageY) {
+            const bounds = getBackgroundImageBounds();
+            const pixelX = bounds.left + (percentageX / 100) * bounds.width;
+            const pixelY = bounds.top + (percentageY / 100) * bounds.height;
+            
+            return {
+                x: pixelX,
+                y: pixelY
+            };
+        }
+        
+        function updateButtonPosition(buttonElement, percentageX, percentageY) {
+            const pixelPos = percentageToPixel(percentageX, percentageY);
+            buttonElement.style.left = (pixelPos.x - 20) + 'px'; // Offset by half button width
+            buttonElement.style.top = (pixelPos.y - 20) + 'px';  // Offset by half button height
+        }
+        
+        function repositionAllButtons() {
+            circleButtons.forEach(buttonData => {
+                const button = document.querySelector('[data-button-id="' + buttonData.id + '"]');
+                if (button) {
+                    updateButtonPosition(button, buttonData.percentageX, buttonData.percentageY);
+                }
+            });
+        }
+
+        window.addEventListener('resize', function() {
+            setTimeout(repositionAllButtons, 10);
+        });
+
         function openModal(buttonId) {
             currentButtonId = buttonId;
             const buttonData = circleButtons.find(btn => btn.id === buttonId);
@@ -580,6 +656,11 @@ Enter 1, 2, or 3:`);
             if (e.target === mediaModal) {
                 closeModal();
             }
+        });
+        
+        // Initialize button positions when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(repositionAllButtons, 10);
         });`;
                 
                 lastScript.textContent = staticScriptContent;
@@ -741,6 +822,70 @@ Note: Files are prefixed with room numbers to help with organization.`);
         let circleButtons = ${JSON.stringify(buttonDataForZip)};
         let currentButtonId = null;
 
+        function getBackgroundImageBounds() {
+            const mapContainer = document.getElementById('mapContainer');
+            const containerRect = mapContainer.getBoundingClientRect();
+            
+            // Background image is an SVG with viewBox="0 0 800 600"
+            const imageAspectRatio = 800 / 600; // 4:3 aspect ratio
+            const containerAspectRatio = containerRect.width / containerRect.height;
+            
+            let imageWidth, imageHeight, imageLeft, imageTop;
+            
+            if (containerAspectRatio > imageAspectRatio) {
+                // Container is wider than image - image will be constrained by height
+                imageHeight = containerRect.height;
+                imageWidth = imageHeight * imageAspectRatio;
+                imageLeft = (containerRect.width - imageWidth) / 2;
+                imageTop = 0;
+            } else {
+                // Container is taller than image - image will be constrained by width
+                imageWidth = containerRect.width;
+                imageHeight = imageWidth / imageAspectRatio;
+                imageLeft = 0;
+                imageTop = (containerRect.height - imageHeight) / 2;
+            }
+            
+            return {
+                left: imageLeft,
+                top: imageTop,
+                width: imageWidth,
+                height: imageHeight,
+                right: imageLeft + imageWidth,
+                bottom: imageTop + imageHeight
+            };
+        }
+        
+        function percentageToPixel(percentageX, percentageY) {
+            const bounds = getBackgroundImageBounds();
+            const pixelX = bounds.left + (percentageX / 100) * bounds.width;
+            const pixelY = bounds.top + (percentageY / 100) * bounds.height;
+            
+            return {
+                x: pixelX,
+                y: pixelY
+            };
+        }
+        
+        function updateButtonPosition(buttonElement, percentageX, percentageY) {
+            const pixelPos = percentageToPixel(percentageX, percentageY);
+            buttonElement.style.left = (pixelPos.x - 20) + 'px'; // Offset by half button width
+            buttonElement.style.top = (pixelPos.y - 20) + 'px';  // Offset by half button height
+        }
+        
+        function repositionAllButtons() {
+            circleButtons.forEach(buttonData => {
+                const button = document.querySelector('[data-button-id="' + buttonData.id + '"]');
+                if (button) {
+                    updateButtonPosition(button, buttonData.percentageX, buttonData.percentageY);
+                }
+            });
+        }
+
+        window.addEventListener('resize', function() {
+            setTimeout(repositionAllButtons, 10);
+        });
+
         function openModal(buttonId) {
             currentButtonId = buttonId;
             const buttonData = circleButtons.find(btn => btn.id === buttonId);
@@ -797,6 +942,11 @@ Note: Files are prefixed with room numbers to help with organization.`);
             if (e.target === mediaModal) {
                 closeModal();
             }
+        });
+        
+        // Initialize button positions when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(repositionAllButtons, 10);
         });`;
                 
                 lastScript.textContent = staticScriptContent;
@@ -822,16 +972,20 @@ Note: Files are prefixed with room numbers to help with organization.`);
             const buttonId = e.dataTransfer.getData('text/plain');
             const button = document.querySelector('[data-button-id="' + buttonId + '"]');
             const rect = this.getBoundingClientRect();
-            const x = e.clientX - rect.left - 20;
-            const y = e.clientY - rect.top - 20;
+            const pixelX = e.clientX - rect.left;
+            const pixelY = e.clientY - rect.top;
             
-            button.style.left = x + 'px';
-            button.style.top = y + 'px';
+            // Convert pixel coordinates to percentage relative to background image
+            const percentage = pixelToPercentage(pixelX, pixelY);
             
+            // Update button position using percentage-based positioning
+            updateButtonPosition(button, percentage.x, percentage.y);
+            
+            // Update the stored data with percentage coordinates
             const buttonData = circleButtons.find(btn => btn.id === buttonId);
             if (buttonData) {
-                buttonData.x = x;
-                buttonData.y = y;
+                buttonData.percentageX = percentage.x;
+                buttonData.percentageY = percentage.y;
             }
         };
 
@@ -890,6 +1044,76 @@ Note: Files are prefixed with room numbers to help with organization.`);
             }
         });
         
+        // Reposition buttons when window is resized
+        window.addEventListener('resize', function() {
+            // Use a small delay to ensure the layout has been updated
+            setTimeout(repositionAllButtons, 10);
+        });
+        
+        // Background image positioning helper functions
+        function getBackgroundImageBounds() {
+            const mapContainer = document.getElementById('mapContainer');
+            const containerRect = mapContainer.getBoundingClientRect();
+            
+            // Background image is an SVG with viewBox="0 0 800 600"
+            const imageAspectRatio = 800 / 600; // 4:3 aspect ratio
+            const containerAspectRatio = containerRect.width / containerRect.height;
+            
+            let imageWidth, imageHeight, imageLeft, imageTop;
+            
+            if (containerAspectRatio > imageAspectRatio) {
+                // Container is wider than image - image will be constrained by height
+                imageHeight = containerRect.height;
+                imageWidth = imageHeight * imageAspectRatio;
+                imageLeft = (containerRect.width - imageWidth) / 2;
+                imageTop = 0;
+            } else {
+                // Container is taller than image - image will be constrained by width
+                imageWidth = containerRect.width;
+                imageHeight = imageWidth / imageAspectRatio;
+                imageLeft = 0;
+                imageTop = (containerRect.height - imageHeight) / 2;
+            }
+            
+            return {
+                left: imageLeft,
+                top: imageTop,
+                width: imageWidth,
+                height: imageHeight,
+                right: imageLeft + imageWidth,
+                bottom: imageTop + imageHeight
+            };
+        }
+        
+        function pixelToPercentage(pixelX, pixelY) {
+            const bounds = getBackgroundImageBounds();
+            const percentageX = ((pixelX - bounds.left) / bounds.width) * 100;
+            const percentageY = ((pixelY - bounds.top) / bounds.height) * 100;
+            
+            // Clamp to 0-100% range
+            return {
+                x: Math.max(0, Math.min(100, percentageX)),
+                y: Math.max(0, Math.min(100, percentageY))
+            };
+        }
+        
+        function percentageToPixel(percentageX, percentageY) {
+            const bounds = getBackgroundImageBounds();
+            const pixelX = bounds.left + (percentageX / 100) * bounds.width;
+            const pixelY = bounds.top + (percentageY / 100) * bounds.height;
+            
+            return {
+                x: pixelX,
+                y: pixelY
+            };
+        }
+        
+        function updateButtonPosition(buttonElement, percentageX, percentageY) {
+            const pixelPos = percentageToPixel(percentageX, percentageY);
+            buttonElement.style.left = (pixelPos.x - 20) + 'px'; // Offset by half button width
+            buttonElement.style.top = (pixelPos.y - 20) + 'px';  // Offset by half button height
+        }
+
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
             initializeBackground();
