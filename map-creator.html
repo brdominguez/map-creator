@@ -381,9 +381,30 @@
         }
 
         function saveMap() {
-            const userWantsToInline = confirm('Do you want to inline all file uploads in base64? (Recommended for portability)\n\nClick OK to include files inline, or Cancel to generate without embedded files.');
+            // Show export options dialog
+            const choice = prompt(`Choose export format:
+1. Embedded HTML (all files inline, single file)
+2. Clean HTML (no files, single file)  
+3. ZIP package (HTML + separate files)
+
+Enter 1, 2, or 3:`);
             
-            generateAndDownloadStaticHTML(userWantsToInline);
+            switch(choice) {
+                case '1':
+                    generateAndDownloadStaticHTML(true);
+                    break;
+                case '2':
+                    generateAndDownloadStaticHTML(false);
+                    break;
+                case '3':
+                    generateAndDownloadZipPackage();
+                    break;
+                default:
+                    if (choice !== null) {
+                        alert('Invalid choice. Please try again.');
+                    }
+                    break;
+            }
         }
 
         function generateAndDownloadStaticHTML(includeFiles) {
@@ -538,6 +559,209 @@
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
+        }
+
+        function generateAndDownloadZipPackage() {
+            // Since we can't use external ZIP libraries in this single-file app,
+            // we'll create multiple downloads: the HTML file + individual media files
+            
+            alert('This will download the static HTML file followed by all media files individually. Save them all to the same folder to maintain the structure.');
+            
+            // First download the static HTML
+            const staticHTML = generateStaticHTMLForZip();
+            downloadHtmlFile(staticHTML, 'index.html');
+            
+            // Then download all media files with a slight delay to avoid browser blocking
+            let downloadDelay = 1000; // Start with 1 second delay
+            
+            circleButtons.forEach(button => {
+                if (button.media && button.media.length > 0) {
+                    button.media.forEach(item => {
+                        setTimeout(() => {
+                            downloadMediaFile(item, `room-${button.number}-${item.name}`);
+                        }, downloadDelay);
+                        downloadDelay += 500; // Increase delay for each file
+                    });
+                }
+            });
+            
+            // Show instructions to user
+            setTimeout(() => {
+                alert(`Download complete! To use the exported map:
+1. Create a folder called 'media'
+2. Move all downloaded files (except index.html) into the media folder
+3. Organize files into subfolders: media/room-1/, media/room-2/, etc.
+4. Open index.html in your browser
+
+Note: Files are prefixed with room numbers to help with organization.`);
+            }, downloadDelay + 1000);
+        }
+
+        function downloadHtmlFile(htmlContent, filename) {
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadMediaFile(mediaItem, filename) {
+            if (mediaItem.data && mediaItem.data.startsWith('data:')) {
+                const link = document.createElement('a');
+                link.href = mediaItem.data;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        function generateStaticHTMLForZip() {
+            // Clone the current document
+            const docClone = document.cloneNode(true);
+            
+            // Remove the control bar from the clone
+            const controlBar = docClone.querySelector('.control-bar');
+            if (controlBar) {
+                controlBar.remove();
+            }
+            
+            // Fix circle button onclick attributes in the clone
+            const circleButtonsInClone = docClone.querySelectorAll('.circle-button');
+            circleButtonsInClone.forEach(button => {
+                const buttonId = button.getAttribute('data-button-id');
+                if (buttonId) {
+                    button.setAttribute('onclick', `openModal('${buttonId}')`);
+                }
+            });
+            
+            // Add an info banner
+            const currentTime = new Date().toLocaleString();
+            const infoBanner = docClone.createElement('div');
+            infoBanner.className = 'info-banner';
+            infoBanner.innerHTML = '📦 Static Map View - Generated on ' + currentTime + ' (with external files)';
+            
+            // Add styles for the info banner
+            const additionalStyles = `
+        .info-banner {
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            color: #2e7d32;
+            padding: 10px;
+            margin: 10px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 14px;
+        }`;
+            
+            const styleElement = docClone.querySelector('style');
+            if (styleElement) {
+                styleElement.textContent += additionalStyles;
+            }
+            
+            // Insert the info banner after the body tag
+            const body = docClone.querySelector('body');
+            if (body && body.firstChild) {
+                body.insertBefore(infoBanner, body.firstChild);
+            }
+            
+            // Update the title
+            const title = docClone.querySelector('title');
+            if (title) {
+                title.textContent = 'Map Creator - Static View (ZIP Export)';
+            }
+            
+            // Create button data with external file references
+            const buttonDataForZip = circleButtons.map(btn => ({
+                ...btn,
+                media: btn.media.map(item => ({
+                    ...item,
+                    data: `media/room-${btn.number}/${item.name}` // Reference external file
+                }))
+            }));
+            
+            // Update the JavaScript to handle external file references
+            const scripts = docClone.querySelectorAll('script');
+            if (scripts.length > 0) {
+                const lastScript = scripts[scripts.length - 1];
+                
+                const staticScriptContent = `
+        let circleButtons = ${JSON.stringify(buttonDataForZip)};
+        let currentButtonId = null;
+
+        function openModal(buttonId) {
+            currentButtonId = buttonId;
+            const buttonData = circleButtons.find(btn => btn.id === buttonId);
+            
+            document.getElementById('modalTitle').textContent = 'Room ' + buttonData.number + ' Media';
+            displayMedia(buttonData.media);
+            document.getElementById('mediaModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('mediaModal').style.display = 'none';
+            currentButtonId = null;
+        }
+
+        function displayMedia(mediaItems) {
+            const gallery = document.getElementById('mediaGallery');
+            gallery.innerHTML = '';
+            
+            if (mediaItems.length === 0) {
+                gallery.innerHTML = '<div class="empty-state">No media files were added to this room.</div>';
+                return;
+            }
+            
+            mediaItems.forEach(item => {
+                const mediaDiv = document.createElement('div');
+                mediaDiv.className = 'media-item';
+                
+                let preview = '';
+                if (item.type.startsWith('image/')) {
+                    preview = '<img src="' + item.data + '" class="media-preview" alt="' + item.name + '" onerror="this.style.display=\\'none\\'">';
+                } else if (item.type.startsWith('video/')) {
+                    preview = '<video src="' + item.data + '" class="media-preview" controls></video>';
+                } else {
+                    preview = '<div class="media-preview" style="background: #e9ecef; display: flex; align-items: center; justify-content: center; font-size: 24px;">📄</div>';
+                }
+                
+                mediaDiv.innerHTML = preview + '<div class="media-name">' + item.name + '</div>';
+                
+                // Make non-media files downloadable by clicking
+                if (!item.type.startsWith('image/') && !item.type.startsWith('video/')) {
+                    mediaDiv.style.cursor = 'pointer';
+                    mediaDiv.onclick = function() {
+                        window.open(item.data, '_blank');
+                    };
+                }
+                
+                gallery.appendChild(mediaDiv);
+            });
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function(e) {
+            const mediaModal = document.getElementById('mediaModal');
+            if (e.target === mediaModal) {
+                closeModal();
+            }
+        });`;
+                
+                lastScript.textContent = staticScriptContent;
+            }
+            
+            // Remove JSZip script tag from clone since it's not needed in static version
+            const jszipScript = docClone.querySelector('script[src*="jszip"]');
+            if (jszipScript) {
+                jszipScript.remove();
+            }
+            
+            // Get the complete HTML
+            return '<!DOCTYPE html>\n' + docClone.documentElement.outerHTML;
         }
 
         // Setup drag and drop
