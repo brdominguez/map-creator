@@ -635,6 +635,18 @@ Enter 1, 2, or 3:`);
                 controlBar.remove();
             }
             
+            // Remove the file upload section from the modal to make it read-only
+            const fileUploadSection = docClone.querySelector('.file-upload-section');
+            if (fileUploadSection) {
+                fileUploadSection.remove();
+            }
+            
+            // Update the initial empty state message to reflect read-only mode
+            const emptyState = docClone.querySelector('.empty-state');
+            if (emptyState && emptyState.textContent.includes('Add Files')) {
+                emptyState.textContent = 'No media files in this room.';
+            }
+            
             // Set the current background image in the clone
             const mapContainerClone = docClone.querySelector('.map-container');
             if (mapContainerClone) {
@@ -789,7 +801,7 @@ Enter 1, 2, or 3:`);
             gallery.innerHTML = '';
             
             if (mediaItems.length === 0) {
-                gallery.innerHTML = '<div class="empty-state">No media files were added to this room.</div>';
+                gallery.innerHTML = '<div class="empty-state">No media files in this room.</div>';
                 return;
             }
             
@@ -1049,6 +1061,18 @@ Note: Files are prefixed with room numbers to help with organization.`);
                 controlBar.remove();
             }
             
+            // Remove the file upload section from the modal to make it read-only
+            const fileUploadSection = docClone.querySelector('.file-upload-section');
+            if (fileUploadSection) {
+                fileUploadSection.remove();
+            }
+            
+            // Update the initial empty state message to reflect read-only mode
+            const emptyState = docClone.querySelector('.empty-state');
+            if (emptyState && emptyState.textContent.includes('Add Files')) {
+                emptyState.textContent = 'No media files in this room.';
+            }
+            
             // Set the current background image in the clone
             const mapContainerClone = docClone.querySelector('.map-container');
             if (mapContainerClone) {
@@ -1206,7 +1230,7 @@ Note: Files are prefixed with room numbers to help with organization.`);
             gallery.innerHTML = '';
             
             if (mediaItems.length === 0) {
-                gallery.innerHTML = '<div class="empty-state">No media files in this room. Files should be organized in the media folder structure.</div>';
+                gallery.innerHTML = '<div class="empty-state">No media files in this room.</div>';
                 return;
             }
             
