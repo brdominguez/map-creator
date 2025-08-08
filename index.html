@@ -276,43 +276,7 @@
         let currentButtonId = null;
         let buttonCounter = 1;
         
-        function migrateOldButtonData() {
-            // Convert old pixel-based coordinates to percentage-based for backward compatibility
-            circleButtons.forEach(buttonData => {
-                if (typeof buttonData.x !== 'undefined' && typeof buttonData.y !== 'undefined') {
-                    // This is old format with pixel coordinates
-                    // Convert to percentage assuming a typical 1280x1024 screen where buttons were positioned
-                    // This is an approximation - the exact conversion isn't possible without knowing the original screen size
-                    const bounds = getBackgroundImageBounds();
-                    if (bounds.width > 0 && bounds.height > 0) {
-                        // Estimate percentage based on current bounds
-                        buttonData.percentageX = Math.max(0, Math.min(100, ((buttonData.x + 20) / bounds.width) * 100));
-                        buttonData.percentageY = Math.max(0, Math.min(100, ((buttonData.y + 20) / bounds.height) * 100));
-                    } else {
-                        // Fallback to center if bounds can't be calculated
-                        buttonData.percentageX = 50;
-                        buttonData.percentageY = 50;
-                    }
-                    
-                    // Remove old properties
-                    delete buttonData.x;
-                    delete buttonData.y;
-                }
-                
-                // Ensure percentage values exist
-                if (typeof buttonData.percentageX === 'undefined') {
-                    buttonData.percentageX = 50;
-                }
-                if (typeof buttonData.percentageY === 'undefined') {
-                    buttonData.percentageY = 50;
-                }
-            });
-        }
-        
         function repositionAllButtons() {
-            // Migrate old data format if needed
-            migrateOldButtonData();
-            
             circleButtons.forEach(buttonData => {
                 const button = document.querySelector('[data-button-id="' + buttonData.id + '"]');
                 if (button) {
